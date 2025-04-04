@@ -29,7 +29,7 @@
         table {
             border-collapse: collapse;
             width: 80%;
-            max-width: 600px;
+            max-width: 800px;
             background-color: #fff;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
@@ -52,6 +52,13 @@
             background-color: #e6ffe6 !important;
             font-weight: bold;
         }
+        .countdown {
+            color: #666;
+            font-family: monospace;
+        }
+        .active-session .countdown {
+            color: #008000;
+        }
     </style>
 </head>
 <body>
@@ -62,30 +69,35 @@
             <th>Location</th>
             <th>Open (UTC)</th>
             <th>Close (UTC)</th>
+            <th>Time to Close</th>
         </tr>
         <tr data-open="22:00" data-close="07:00">
             <td>Australia</td>
             <td>Sydney</td>
             <td>22:00</td>
             <td>07:00</td>
+            <td class="countdown">--:--</td>
         </tr>
         <tr data-open="00:00" data-close="09:00">
             <td>Asia</td>
             <td>Tokyo</td>
             <td>00:00</td>
             <td>09:00</td>
+            <td class="countdown">--:--</td>
         </tr>
         <tr data-open="08:00" data-close="17:00">
             <td>London</td>
             <td>London</td>
             <td>08:00</td>
             <td>17:00</td>
+            <td class="countdown">--:--</td>
         </tr>
         <tr data-open="13:00" data-close="22:00">
             <td>New York</td>
             <td>New York</td>
             <td>13:00</td>
             <td>22:00</td>
+            <td class="countdown">--:--</td>
         </tr>
     </table>
 
@@ -102,12 +114,32 @@
             updateActiveSessions(hours, minutes);
         }
 
+        function calculateTimeToClose(currentHour, currentMinute, closeHour) {
+            let hoursToClose = closeHour - currentHour;
+            let minutesToClose = 0 - currentMinute;
+            
+            if (minutesToClose < 0) {
+                hoursToClose--;
+                minutesToClose += 60;
+            }
+            
+            if (hoursToClose < 0) {
+                hoursToClose += 24;
+            }
+            
+            return {
+                hours: hoursToClose,
+                minutes: minutesToClose
+            };
+        }
+
         function updateActiveSessions(currentHours, currentMinutes) {
             const currentTime = parseInt(currentHours) + currentMinutes / 60;
 
             sessionRows.forEach(row => {
                 const openTime = row.dataset.open;
                 const closeTime = row.dataset.close;
+                const countdownElement = row.querySelector('.countdown');
                 
                 const openHour = parseInt(openTime.split(':')[0]);
                 const closeHour = parseInt(closeTime.split(':')[0]);
@@ -123,8 +155,15 @@
 
                 if (isActive) {
                     row.classList.add('active-session');
+                    const timeToClose = calculateTimeToClose(
+                        parseInt(currentHours),
+                        parseInt(currentMinutes),
+                        closeHour
+                    );
+                    countdownElement.textContent = `${timeToClose.hours.toString().padStart(2, '0')}:${timeToClose.minutes.toString().padStart(2, '0')}`;
                 } else {
                     row.classList.remove('active-session');
+                    countdownElement.textContent = '--:--';
                 }
             });
         }
